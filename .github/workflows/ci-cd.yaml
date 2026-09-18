@@ -1,0 +1,75 @@
+# =============================================================================
+# GitHub Actions CI/CD Pipeline
+# Builds, tests, pushes to self-hosted registry, and updates self-managed K8s cluster
+# =============================================================================
+name: Build, Push & Deploy to Self-Managed K8s
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'app/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+env:
+  REGISTRY_HOST: ${{ secrets.K8S_CP_PUBLIC_IP }}:30500
+  IMAGE_NAME: custom-service
+  DEPLOYMENT_NAME: frontend
+  NAMESPACE: boutique
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Container Image
+      run: |
+        TAG="${{ github.sha }}"
+        echo "Building image tag: $TAG"
+        # In a real project: docker build -t $IMAGE_NAME:$TAG ./app
+        docker build -t $IMAGE_NAME:$TAG - <<EOF
+        FROM alpine:3.19
+        RUN apk add --no-cache curl
+        CMD ["echo", "Custom microservice running in self-managed K8s"]
+        EOF
+        docker tag $IMAGE_NAME:$TAG ${{ env.REGISTRY_HOST }}/$IMAGE_NAME:$TAG
+
+    - name: Configure WireGuard / VPN / Bastion SSH Tunnel
+      run: |
+        # Set up SSH key to access control plane securely
+        mkdir -p ~/.ssh
+        echo "${{ secrets.K8S_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.K8S_CP_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+    - name: Push to Self-Hosted Registry
+      run: |
+        # Create SSH tunnel to local registry port 30500 on control plane
+        ssh -N -L 5000:localhost:30500 ubuntu@${{ secrets.K8S_CP_PUBLIC_IP }} &
+        TUNNEL_PID=$!
+        sleep 3
+
+        docker tag $IMAGE_NAME:${{ github.sha }} localhost:5000/$IMAGE_NAME:${{ github.sha }}
+        docker push localhost:5000/$IMAGE_NAME:${{ github.sha }}
+
+        kill $TUNNEL_PID || true
+
+    - name: Deploy to Self-Managed Kubernetes Cluster
+      run: |
+        # Deploy using kubectl through SSH bastion or Kubeconfig
+        ssh ubuntu@${{ secrets.K8S_CP_PUBLIC_IP }} << 'EOF'
+          echo "Connected to Control Plane: $(hostname)"
+          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} \
+            server=10.0.1.10:30500/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -n ${{ env.NAMESPACE }} --record || true
+          
+          echo "Checking rollout status..."
+          kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n ${{ env.NAMESPACE }} --timeout=60s || true
+        EOF

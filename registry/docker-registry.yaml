@@ -1,0 +1,77 @@
+# =============================================================================
+# docker-registry.yaml: Self-Hosted In-Cluster Container Registry (registry:2)
+# Backed by self-managed local-path persistent storage
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: container-registry
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-pvc
+  namespace: container-registry
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  namespace: container-registry
+  labels:
+    app: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+      containers:
+      - name: registry
+        image: registry:2.8.3
+        ports:
+        - containerPort: 5000
+          name: registry-port
+        env:
+        - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+          value: /var/lib/registry
+        volumeMounts:
+        - name: storage
+          mountPath: /var/lib/registry
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: registry-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-svc
+  namespace: container-registry
+spec:
+  type: NodePort
+  selector:
+    app: registry
+  ports:
+  - name: registry-http
+    port: 5000
+    targetPort: 5000
+    nodePort: 30500

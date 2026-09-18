@@ -1,0 +1,14 @@
+# AWS Region
+aws_region = "us-east-1"
+
+# Existing EC2 Key Pair name in AWS (without .pem)
+key_name = "my-k8s-key"
+
+# Restrict SSH / Kube-API access to your current public IP for security
+# Find via: curl https://checkip.amazonaws.com
+admin_ip = "0.0.0.0/0"
+
+# Instance sizing
+control_plane_instance_type = "t3.medium"  # 2 vCPU, 4GB RAM
+worker_instance_type        = "t3.medium"  # 2 vCPU, 4GB RAM (or t3.large for extra headroom)
+worker_count                = 2

@@ -1,0 +1,55 @@
+# =============================================================================
+# kubeadm-config.yaml: Declarative Control Plane Bootstrap Specification
+# =============================================================================
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: "10.0.1.10"
+  bindPort: 6443
+nodeRegistration:
+  criSocket: "unix:///var/run/containerd/containerd.sock"
+  name: "k8s-cp1"
+  taints:
+  - effect: "NoSchedule"
+    key: "node-role.kubernetes.io/control-plane"
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+kubernetesVersion: "v1.30.0"
+clusterName: "self-managed-k8s"
+controlPlaneEndpoint: "10.0.1.10:6443"
+
+# Networking definitions:
+# podSubnet: 192.168.0.0/16 is the standard default CIDR block for Calico CNI
+# serviceSubnet: 10.96.0.0/12 provides IP addresses for ClusterIP services
+networking:
+  dnsDomain: "cluster.local"
+  podSubnet: "192.168.0.0/16"
+  serviceSubnet: "10.96.0.0/12"
+
+# API Server TLS Subject Alternative Names (SANs)
+# Crucial for allowing kubectl access via private IP, hostname, or public IP
+apiServer:
+  extraArgs:
+    authorization-mode: "Node,RBAC"
+  certSANs:
+  - "10.0.1.10"
+  - "k8s-cp1"
+  - "127.0.0.1"
+  - "localhost"
+  # Replace with your EC2 Control Plane Public IP if connecting from laptop
+  # - "3.235.xxx.xxx"
+
+# Dedicated local etcd configuration
+etcd:
+  local:
+    dataDir: "/var/lib/etcd"
+    extraArgs:
+      listen-metrics-urls: "http://0.0.0.0:2381"
+
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: "systemd"
+failSwapOn: true
+maxPods: 110

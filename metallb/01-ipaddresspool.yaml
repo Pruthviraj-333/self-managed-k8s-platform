@@ -1,0 +1,15 @@
+# =============================================================================
+# 01-ipaddresspool.yaml: MetalLB Private IP Address Pool
+# Allocates VIPs directly from the VPC private subnet (10.0.1.0/24)
+# =============================================================================
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: onprem-vpc-pool
+  namespace: metallb-system
+spec:
+  # A dedicated IP range inside 10.0.1.0/24 outside AWS DHCP dynamically assigned range
+  # (AWS reserves .0, .1, .2, .3, and .255; our EC2 instances are .10, .20, .21)
+  addresses:
+  - 10.0.1.200-10.0.1.210
+  autoAssign: true

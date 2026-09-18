@@ -1,0 +1,12 @@
+# =============================================================================
+# 02-l2advertisement.yaml: MetalLB Layer 2 ARP Advertisement
+# Instructs MetalLB speakers to respond to ARP requests for assigned VIPs
+# =============================================================================
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: onprem-l2-advert
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - onprem-vpc-pool

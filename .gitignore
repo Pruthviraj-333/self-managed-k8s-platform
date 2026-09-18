@@ -1,0 +1,33 @@
+# Terraform local state and modules
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+terraform.tfvars
+
+# Secrets, private keys, and local kubeconfigs
+*.pem
+*.key
+*.pfx
+id_rsa*
+kubeconfig
+admin.conf
+
+# OS and Editor metadata
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Temporary files
+*.tmp
