@@ -168,10 +168,10 @@ A portfolio-grade, production-engineered self-managed Kubernetes platform deploy
 ├── scripts/                               # Management Utilities
 │   ├── cluster-power.sh                   # One-command AWS power-off/power-on cost saver (Bash)
 │   └── cluster-power.ps1                  # Native Windows PowerShell power-off/power-on utility
-└── docs/                                  # Technical & Interview Deep Dives
+└── docs/                                  # Technical Architecture & Internals Deep Dives
     ├── 01-kubeadm-deep-dive.md            # PKI certificates, static pods, bootstrap token
     ├── 02-networking-deep-dive.md         # Calico overlay vs VPC CNI, MetalLB L2 ARP
-    └── 03-interview-qa-prep.md            # 25+ senior DevOps technical interview Q&As
+    └── 03-architecture-and-internals-faq.md # Linux kernel primitives, control plane mechanics & operational FAQ
 ```
 
 ---
@@ -588,4 +588,4 @@ cd terraform && terraform destroy -auto-approve
 
 - **[01-kubeadm-deep-dive.md](file:///d:/self-managed-k8s-ec2/docs/01-kubeadm-deep-dive.md)**: Deep breakdown of x509 PKI certificates, static pods, and TLS bootstrap token mechanics.
 - **[02-networking-deep-dive.md](file:///d:/self-managed-k8s-ec2/docs/02-networking-deep-dive.md)**: Technical comparison of Calico CNI overlay vs AWS VPC CNI, why `source_dest_check=false` is mandatory on EC2, and MetalLB Layer 2 ARP leader election.
-- **[03-interview-qa-prep.md](file:///d:/self-managed-k8s-ec2/docs/03-interview-qa-prep.md)**: 25+ real-world senior DevOps and Kubernetes interview questions and detailed answers.
+- **[03-architecture-and-internals-faq.md](file:///d:/self-managed-k8s-ec2/docs/03-architecture-and-internals-faq.md)**: Authoritative technical reference covering low-level Linux kernel primitives (cgroups/sysctl), control plane mechanics, networking overlays, storage binding, and disaster recovery procedures.
