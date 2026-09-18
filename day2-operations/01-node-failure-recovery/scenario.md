@@ -90,6 +90,6 @@ cartservice-5f87b8f-q21kl  0/1     ContainerCreating   0          2s    k8s-work
 
 ---
 
-## 4. Key Interview Takeaways
+## 4. Key Operational Architecture Takeaways
 - **How to tune failover speed in production?** You can reduce `--node-monitor-grace-period` (e.g. to 20s) and set custom pod `tolerationSeconds: 30` in Deployment specs for critical services so failover happens in 50 seconds rather than 5.5 minutes.
 - **Why do pods on the dead node remain in `Terminating`?** Because the control plane cannot communicate with the dead node's kubelet to confirm container destruction. They remain in `Terminating` until the node comes back or is manually force-deleted (`kubectl delete pod <pod> --force --grace-period=0`).

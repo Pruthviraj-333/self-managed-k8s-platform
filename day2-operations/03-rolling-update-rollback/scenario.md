@@ -89,6 +89,6 @@ frontend-69d6796987-zw9ql   1/1     Running   0          44m
 
 ---
 
-## 4. Key Interview Discussion Points
+## 4. Key Production Deployment Takeaways
 - **What happens to traffic during a failed rollout?** Because the Service endpoints controller only routes traffic to pods where `status.conditions[Ready] == true`, the broken pod in `ImagePullBackOff` never receives traffic. The application suffers 0% downtime.
 - **How does Kubernetes retain rollout history?** Via the field `spec.revisionHistoryLimit` (default: 10). The controller retains old ReplicaSet objects with `replicas: 0`. During a rollback, it simply scales up the target ReplicaSet and scales down the failed one.

@@ -1,6 +1,6 @@
 # Networking Deep Dive: Calico CNI, Overlay vs. VPC CNI, and MetalLB L2 ARP
 
-This guide explains the foundational networking principles implemented in this cluster. It provides the exact technical answers required when interviewers probe into container networking, overlay encapsulation, and bare-metal ingress.
+This guide explains the foundational networking principles implemented in this cluster, covering container networking, overlay encapsulation, routing boundaries, and bare-metal ingress.
 
 ---
 

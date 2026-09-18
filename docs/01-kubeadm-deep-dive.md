@@ -1,6 +1,6 @@
-# Kubeadm Bootstrap Deep Dive & Interview Reference Guide
+# Kubeadm Bootstrap Deep Dive & Architecture Reference Guide
 
-This document breaks down every certificate, component, static pod, and TLS flow created during `kubeadm init` and `kubeadm join`. You will be able to explain the entire control plane anatomy in senior Kubernetes/DevOps engineering interviews.
+This document breaks down every certificate, component, static pod, and TLS flow created during `kubeadm init` and `kubeadm join`, providing an authoritative reference of control plane anatomy for senior DevOps and platform engineers.
 
 ---
 
@@ -104,6 +104,6 @@ When a worker joins via `kubeadm join 10.0.1.10:6443 --token <token> --discovery
      ├──────────────────────────────────────────────────────────────>│
 ```
 
-### Interview Explanation Points:
+### Key Architectural Insights:
 - **Why is `--discovery-token-ca-cert-hash` necessary?** Without this, a worker node could be subjected to a Man-in-the-Middle (MITM) attack where a rogue machine responds with an attacker CA. The SHA256 thumbprint verifies that the CA downloaded from `cluster-info` ConfigMap is authentic before exchanging any secrets.
 - **Why do worker nodes show `NotReady` immediately after joining?** Kubelet starts and registers, but reports `Ready=False` with `KubeletNotReady: container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized`. It remains `NotReady` until a CNI plugin (Calico) installs network configuration files into `/etc/cni/net.d/`.

@@ -1,6 +1,6 @@
 # AWS EC2 Cost Analysis & Budget Management Guide
 
-This project is specifically engineered to give you complete, production-grade self-managed Kubernetes experience while keeping your AWS cloud bill **under $5 to $10 total** for your entire study and interview demonstration period.
+This project is specifically engineered to give you complete, production-grade self-managed Kubernetes experience while keeping your AWS cloud bill **under $5 to $10 total** for your entire testing and demonstration period.
 
 ---
 

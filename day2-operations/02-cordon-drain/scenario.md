@@ -104,6 +104,6 @@ k8s-worker2   Ready    worker          3h    v1.30.0
 
 ---
 
-## 4. Key Interview Discussion Points
+## 4. Key Operational Architecture Takeaways
 - **Does uncordoning immediately move evicted pods back?**
   **NO!** Kubernetes will *never* automatically rebalance running pods back to an uncordoned node. Running pods will remain on their current nodes until they are deleted, restarted, or scaled up. If rebalancing is desired, tools like `descheduler` must be used.
