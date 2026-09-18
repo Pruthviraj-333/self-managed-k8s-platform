@@ -17,10 +17,11 @@ A portfolio-grade, production-engineered self-managed Kubernetes platform deploy
 ---
 
 ## Table of Contents
-1. [Architecture & Component Topology](#architecture--component-topology)
-2. [Why Self-Managed (kubeadm) vs. Cloud-Managed (EKS)?](#why-self-managed-kubeadm-vs-cloud-managed-eks)
-3. [Repository Directory Structure](#repository-directory-structure)
-4. [Build Phase: Step-by-Step Platform Setup](#build-phase-step-by-step-platform-setup)
+1. [⚡ Quickstart Guide (Deploy in 5 Steps)](#-quickstart-guide-deploy-in-5-steps)
+2. [Architecture & Component Topology](#architecture--component-topology)
+3. [Why Self-Managed (kubeadm) vs. Cloud-Managed (EKS)?](#why-self-managed-kubeadm-vs-cloud-managed-eks)
+4. [Repository Directory Structure](#repository-directory-structure)
+5. [Build Phase: Step-by-Step Platform Setup](#build-phase-step-by-step-platform-setup)
    - [Step 1: Infrastructure as Code (Terraform & Security Groups)](#step-1-infrastructure-as-code-terraform--security-groups)
    - [Step 2: OS Prep, Containerd & Kubeadm Control Plane Bootstrap](#step-2-os-prep-containerd--kubeadm-control-plane-bootstrap)
    - [Step 3: Calico CNI & Cross-Node Connectivity](#step-3-calico-cni--cross-node-connectivity)
@@ -90,6 +91,81 @@ A portfolio-grade, production-engineered self-managed Kubernetes platform deploy
 | **Pod Networking** | AWS VPC CNI assigns secondary VPC IPs to pods; hits strict EC2 ENI attachment limits. | Calico CNI with VXLAN overlay decouples pod IP space (`192.168.0.0/16`) from VPC subnets. |
 | **Load Balancing** | Cloud-controller-manager provisions AWS NLBs/ALBs ($16–$22/month each). | MetalLB runs in-cluster, handling Layer 2 ARP broadcasts for private VIPs ($0.00 cloud fees). |
 | **Persistent Storage** | AWS EBS CSI driver creates dynamic EBS volumes via AWS Cloud APIs. | Rancher Local Path Provisioner dynamically manages hostPath disks, emulating on-prem DAS/SAN. |
+
+---
+
+## ⚡ Quickstart Guide (Deploy in 5 Steps)
+
+Follow this quickstart to deploy the entire production self-managed cluster on AWS in under 15 minutes:
+
+### 1. Prerequisites
+- AWS CLI configured (`aws configure`) with credentials for `us-east-1` (or your target region).
+- Terraform v1.5+ installed.
+- An existing AWS EC2 Key Pair (e.g., `KEY-PAIR-VIRGINIA.pem`).
+
+### 2. Provision Infrastructure (Terraform)
+```bash
+git clone https://github.com/Pruthviraj-333/self-managed-k8s-platform.git
+cd self-managed-k8s-platform/terraform
+cp terraform.tfvars.example terraform.tfvars
+# Update key_name and admin_ip in terraform.tfvars
+terraform init
+terraform apply -auto-approve
+```
+*Outputs provide the static private IPs and assigned public IPs for `k8s-cp1`, `k8s-worker1`, and `k8s-worker2`.*
+
+### 3. Bootstrap OS & Control Plane (Kubeadm)
+SSH into the nodes using your key pair:
+```bash
+# On ALL 3 nodes (Control plane & workers):
+bash kubeadm/00-prep-node.sh
+bash kubeadm/01-install-containerd.sh
+bash kubeadm/02-install-kubernetes.sh
+
+# On Control Plane (k8s-cp1) only:
+bash kubeadm/03-init-control-plane.sh
+
+# On Worker Nodes (k8s-worker1, k8s-worker2):
+sudo kubeadm join 10.0.1.10:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+```
+
+### 4. Deploy Core Networking, Storage & Load Balancing
+From the control plane (`k8s-cp1`):
+```bash
+# 1. Calico CNI (Pod overlay network 192.168.0.0/16)
+kubectl apply -f cni/calico/01-tigera-operator.yaml
+kubectl apply -f cni/calico/02-custom-resources.yaml
+
+# 2. MetalLB Layer 2 Load Balancer & Ingress-NGINX
+bash metallb/00-install-metallb.sh
+bash ingress/00-install-ingress.sh
+
+# 3. Dynamic Local Path Storage & PostgreSQL StatefulSet
+bash storage/00-install-local-path.sh
+bash storage/verify-storage.sh
+```
+
+### 5. Launch Workloads & Observability Stack
+```bash
+# 1. Google Online Boutique (11 Microservices Suite)
+bash workloads/online-boutique/deploy-boutique.sh
+
+# 2. Prometheus, Alertmanager & Grafana Monitoring Stack
+bash monitoring/deploy-monitoring.sh
+kubectl apply -f monitoring/06-grafana-dashboards.yaml
+```
+
+### 🌐 Live Service Access:
+- **Online Boutique Storefront**: `http://<Node-Public-IP>:32362`
+- **Grafana Cluster Dashboard**: `http://<Node-Public-IP>:32000` *(User: `admin` / Password: `admin_password`)*
+- **Prometheus Metrics Console**: `http://<Node-Public-IP>:30090`
+
+### ⏸️ Power Saving & Cost Management:
+When finished testing, pause compute billing immediately:
+```powershell
+.\scripts\cluster-power.ps1 stop     # Windows PowerShell
+# or: bash scripts/cluster-power.sh stop  # Linux / macOS
+```
 
 ---
 
