@@ -17,7 +17,7 @@ A portfolio-grade, production-engineered self-managed Kubernetes platform deploy
 ---
 
 ## Table of Contents
-1. [⚡ Quickstart Guide (Deploy in 5 Steps)](#-quickstart-guide-deploy-in-5-steps)
+1. [ Quickstart Guide (Deploy in 5 Steps)](#-quickstart-guide-deploy-in-5-steps)
 2. [Architecture & Component Topology](#architecture--component-topology)
 3. [Why Self-Managed (kubeadm) vs. Cloud-Managed (EKS)?](#why-self-managed-kubeadm-vs-cloud-managed-eks)
 4. [Repository Directory Structure](#repository-directory-structure)
@@ -98,7 +98,7 @@ A portfolio-grade, production-engineered self-managed Kubernetes platform deploy
 
 ---
 
-## ⚡ Quickstart Guide (Deploy in 5 Steps)
+##  Quickstart Guide (Deploy in 5 Steps)
 
 Follow this quickstart to deploy the entire production self-managed cluster on AWS in under 15 minutes:
 
@@ -159,12 +159,12 @@ bash monitoring/deploy-monitoring.sh
 kubectl apply -f monitoring/06-grafana-dashboards.yaml
 ```
 
-### 🌐 Live Service Access:
+###  Live Service Access:
 - **Online Boutique Storefront**: `http://<Node-Public-IP>:32362`
 - **Grafana Cluster Dashboard**: `http://<Node-Public-IP>:32000` *(User: `admin` / Password: `admin_password`)*
 - **Prometheus Metrics Console**: `http://<Node-Public-IP>:30090`
 
-### ⏸️ Power Saving & Cost Management:
+###  Power Saving & Cost Management:
 When finished testing, pause compute billing immediately:
 ```powershell
 .\scripts\cluster-power.ps1 stop     # Windows PowerShell
