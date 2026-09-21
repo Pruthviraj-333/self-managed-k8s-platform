@@ -31,3 +31,7 @@ Thumbs.db
 
 # Temporary files
 *.tmp
+
+# HashiCorp Vault — NEVER commit unseal keys or root token
+storage/vault/vault-keys.json
+storage/vault/.vault-env

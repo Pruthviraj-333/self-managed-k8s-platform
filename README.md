@@ -37,8 +37,9 @@ A portfolio-grade, production-engineered self-managed Kubernetes platform deploy
    - [Drill 12: Break-Fix Incident (NetworkPolicy Isolation Debugging)](#drill-12-break-fix-incident-networkpolicy-isolation-debugging)
    - [Drill 13: Etcd Disaster Recovery (Snapshot & Point-in-Time Restore)](#drill-13-etcd-disaster-recovery-snapshot--point-in-time-restore)
    - [Drill 14: Resource Management, Kernel OOMKill (Exit 137) & CPU Throttling](#drill-14-resource-management-kernel-oomkill-exit-137--cpu-throttling)
-6. [AWS EC2 Cost Optimization & Power Management](#aws-ec2-cost-optimization--power-management)
-7. [Deep-Dive Technical Documentation](#deep-dive-technical-documentation)
+6. [Secret Management: HashiCorp Vault + External Secrets Operator](#secret-management-hashicorp-vault--external-secrets-operator)
+7. [AWS EC2 Cost Optimization & Power Management](#aws-ec2-cost-optimization--power-management)
+8. [Deep-Dive Technical Documentation](#deep-dive-technical-documentation)
 
 ---
 
@@ -627,6 +628,24 @@ $ kubectl describe pod oom-demo-pod | grep -E "(State|Reason|Exit Code)"
 
 ---
 
+## Secret Management: HashiCorp Vault + External Secrets Operator
+
+All platform secrets (database passwords, monitoring credentials, registry tokens) are managed
+through **HashiCorp Vault** (open-source, self-hosted, $0.00 cost) deployed as a StatefulSet
+on this cluster. This eliminates hardcoded credentials from all YAML files.
+
+| Secret | Vault Path | K8s Secret (auto-created by ESO) |
+|--------|-----------|----------------------------------|
+| PostgreSQL credentials | `secret/postgres/credentials` | `postgres-credentials` (namespace: default) |
+| Grafana admin password | `secret/grafana/credentials` | `grafana-credentials` (namespace: monitoring) |
+| Registry auth token | `secret/registry/credentials` | `registry-credentials` (namespace: default) |
+
+**Flow:** Vault stores secrets → External Secrets Operator authenticates via K8s ServiceAccount JWT → ESO auto-creates K8s Secrets → Pods consume them as normal.
+
+See **[docs/04-secrets-management.md](docs/04-secrets-management.md)** for full architecture, deployment steps, and least-privilege policy design.
+
+---
+
 ## AWS EC2 Cost Optimization & Power Management
 
 Detailed cost breakdown available in [`COSTS.md`](file:///d:/self-managed-k8s-ec2/COSTS.md).
@@ -666,6 +685,7 @@ cd terraform && terraform destroy -auto-approve
 
 ## Deep-Dive Technical Documentation
 
-- **[01-kubeadm-deep-dive.md](file:///d:/self-managed-k8s-ec2/docs/01-kubeadm-deep-dive.md)**: Deep breakdown of x509 PKI certificates, static pods, and TLS bootstrap token mechanics.
-- **[02-networking-deep-dive.md](file:///d:/self-managed-k8s-ec2/docs/02-networking-deep-dive.md)**: Technical comparison of Calico CNI overlay vs AWS VPC CNI, why `source_dest_check=false` is mandatory on EC2, and MetalLB Layer 2 ARP leader election.
-- **[03-architecture-and-internals-faq.md](file:///d:/self-managed-k8s-ec2/docs/03-architecture-and-internals-faq.md)**: Authoritative technical reference covering low-level Linux kernel primitives (cgroups/sysctl), control plane mechanics, networking overlays, storage binding, and disaster recovery procedures.
+- **[01-kubeadm-deep-dive.md](docs/01-kubeadm-deep-dive.md)**: Deep breakdown of x509 PKI certificates, static pods, and TLS bootstrap token mechanics.
+- **[02-networking-deep-dive.md](docs/02-networking-deep-dive.md)**: Technical comparison of Calico CNI overlay vs AWS VPC CNI, why `source_dest_check=false` is mandatory on EC2, and MetalLB Layer 2 ARP leader election.
+- **[03-architecture-and-internals-faq.md](docs/03-architecture-and-internals-faq.md)**: Authoritative technical reference covering low-level Linux kernel primitives (cgroups/sysctl), control plane mechanics, networking overlays, storage binding, and disaster recovery procedures.
+- **[04-secrets-management.md](docs/04-secrets-management.md)**: Production secret management architecture — HashiCorp Vault KV engine, Kubernetes Auth backend, External Secrets Operator, least-privilege policies, and secret rotation workflow.

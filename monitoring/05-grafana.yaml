@@ -40,10 +40,23 @@ spec:
         - containerPort: 3000
           name: http
         env:
+        # -----------------------------------------------------------------------
+        # PRODUCTION SECRET MANAGEMENT:
+        # These credentials are NOT hardcoded here. They are sourced from the
+        # 'grafana-credentials' K8s Secret, which is AUTO-CREATED by the
+        # External Secrets Operator by reading from HashiCorp Vault.
+        # See: storage/vault/04-grafana-external-secret.yaml
+        # -----------------------------------------------------------------------
         - name: GF_SECURITY_ADMIN_USER
-          value: "admin"
+          valueFrom:
+            secretKeyRef:
+              name: grafana-credentials
+              key: GF_SECURITY_ADMIN_USER
         - name: GF_SECURITY_ADMIN_PASSWORD
-          value: "prom-operator"
+          valueFrom:
+            secretKeyRef:
+              name: grafana-credentials
+              key: GF_SECURITY_ADMIN_PASSWORD
         - name: GF_USERS_ALLOW_SIGN_UP
           value: "false"
         resources:

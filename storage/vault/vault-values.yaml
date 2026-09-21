@@ -1,0 +1,76 @@
+# =============================================================================
+# vault-values.yaml: Helm values for HashiCorp Vault on self-managed k8s
+# =============================================================================
+# Deploy: helm install vault hashicorp/vault -n vault --create-namespace -f vault-values.yaml
+#
+# NOTE: This deploys Vault in "standalone" mode (single replica) using the
+# cluster's existing Rancher local-path storage provisioner for persistence.
+# In a real production HA setup you'd use "ha" mode with 3+ replicas and
+# Vault's built-in Raft storage — see comments below.
+# =============================================================================
+
+global:
+  enabled: true
+
+server:
+  # -----------------------------------------------------------------------
+  # Mode: standalone (single replica, simpler for lab/portfolio)
+  # Production alternative: set ha.enabled=true with replicas: 3
+  # -----------------------------------------------------------------------
+  standalone:
+    enabled: true
+    config: |
+      ui = true
+
+      listener "tcp" {
+        tls_disable = 1
+        address     = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+
+      storage "file" {
+        path = "/vault/data"
+      }
+
+      # Production note: In HA mode, replace "file" storage with:
+      # storage "raft" {
+      #   path    = "/vault/data"
+      #   node_id = "vault-0"
+      # }
+
+  # Persistent storage via Rancher local-path provisioner (already on cluster)
+  dataStorage:
+    enabled: true
+    size: 2Gi
+    storageClass: "local-path"
+    accessMode: ReadWriteOnce
+
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 250m
+
+  # Expose Vault UI via NodePort so you can access it from your workstation
+  service:
+    type: NodePort
+    nodePort: 30820
+
+# Vault Agent Injector — enables sidecar injection via pod annotations
+injector:
+  enabled: true
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 128Mi
+      cpu: 100m
+
+# Vault UI (web interface)
+ui:
+  enabled: true
+  serviceType: NodePort
+  serviceNodePort: 30820
