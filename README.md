@@ -79,6 +79,10 @@ A portfolio-grade, production-engineered self-managed Kubernetes platform deploy
          └───────────────────┘     └───────────────────┘     └───────────────────┘
 ```
 
+> **Visual Architecture Diagram**
+>
+> ![Self-Managed Kubernetes Platform on AWS EC2](evidence/Self-Managed%20Kubernetes%20Platform%20on%20AWS%20EC2.png)
+
 ---
 
 ## Why Self-Managed (kubeadm) vs. Cloud-Managed (EKS)?
