@@ -83,7 +83,7 @@ kubectl wait --for=condition=Ready pod/vault-0 -n "$VAULT_NAMESPACE" --timeout=6
 
 # ------------------------------------------------------------------------------
 # 6. Enable KV v2 secrets engine and store all platform secrets
-#    Company practice: all app secrets live under secret/<app>/credentials
+#    Credentials are prompted at runtime — NEVER hardcoded in this file.
 # ------------------------------------------------------------------------------
 echo "[6/7] Enabling KV v2 secrets engine and loading all platform secrets..."
 
@@ -94,30 +94,80 @@ kubectl exec -n "$VAULT_NAMESPACE" vault-0 -- \
 kubectl exec -n "$VAULT_NAMESPACE" vault-0 -- \
   env VAULT_TOKEN="$ROOT_TOKEN" vault secrets enable -path=secret kv-v2
 
+# -----------------------------------------------------------------------
+# Prompt for all secrets at runtime — nothing is written to disk or git
+# -----------------------------------------------------------------------
+echo ""
+echo "  You will now be prompted to enter credentials for each service."
+echo "  Input is hidden (silent). Press Enter after each value."
+echo ""
+
 # --- PostgreSQL Credentials ---
+read -rp  "  PostgreSQL DB name   [default: ecommerce_db]:   " PG_DB
+read -rp  "  PostgreSQL username  [default: postgres_admin]: " PG_USER
+read -rsp "  PostgreSQL password: " PG_PASSWORD; echo ""
+
+PG_DB="${PG_DB:-ecommerce_db}"
+PG_USER="${PG_USER:-postgres_admin}"
+
+if [[ -z "$PG_PASSWORD" ]]; then
+  echo "ERROR: PostgreSQL password cannot be empty."
+  exit 1
+fi
+
 echo "      Storing: secret/postgres/credentials"
 kubectl exec -n "$VAULT_NAMESPACE" vault-0 -- \
   env VAULT_TOKEN="$ROOT_TOKEN" vault kv put secret/postgres/credentials \
-    POSTGRES_DB="ecommerce_db" \
-    POSTGRES_USER="postgres_admin" \
-    POSTGRES_PASSWORD="SelfManagedK8sPassword123!"
+    POSTGRES_DB="$PG_DB" \
+    POSTGRES_USER="$PG_USER" \
+    POSTGRES_PASSWORD="$PG_PASSWORD"
+
+# Immediately unset from shell memory
+unset PG_PASSWORD
 
 # --- Grafana Admin Credentials ---
+read -rp  "  Grafana admin username [default: admin]: " GF_USER
+read -rsp "  Grafana admin password: " GF_PASSWORD; echo ""
+
+GF_USER="${GF_USER:-admin}"
+
+if [[ -z "$GF_PASSWORD" ]]; then
+  echo "ERROR: Grafana password cannot be empty."
+  exit 1
+fi
+
 echo "      Storing: secret/grafana/credentials"
 kubectl exec -n "$VAULT_NAMESPACE" vault-0 -- \
   env VAULT_TOKEN="$ROOT_TOKEN" vault kv put secret/grafana/credentials \
-    GF_SECURITY_ADMIN_USER="admin" \
-    GF_SECURITY_ADMIN_PASSWORD="prom-operator"
+    GF_SECURITY_ADMIN_USER="$GF_USER" \
+    GF_SECURITY_ADMIN_PASSWORD="$GF_PASSWORD"
 
-# --- Container Registry Credentials (for in-cluster registry push/pull) ---
+unset GF_PASSWORD
+
+# --- Container Registry Credentials ---
+read -rp  "  Registry URL    [default: k8s-cp1:30500]:   " REG_URL
+read -rp  "  Registry user   [default: registry_admin]: " REG_USER
+read -rsp "  Registry password: " REG_PASSWORD; echo ""
+
+REG_URL="${REG_URL:-k8s-cp1:30500}"
+REG_USER="${REG_USER:-registry_admin}"
+
+if [[ -z "$REG_PASSWORD" ]]; then
+  echo "ERROR: Registry password cannot be empty."
+  exit 1
+fi
+
 echo "      Storing: secret/registry/credentials"
 kubectl exec -n "$VAULT_NAMESPACE" vault-0 -- \
   env VAULT_TOKEN="$ROOT_TOKEN" vault kv put secret/registry/credentials \
-    REGISTRY_URL="k8s-cp1:30500" \
-    REGISTRY_USER="registry_admin" \
-    REGISTRY_PASSWORD="RegistrySecret456!"
+    REGISTRY_URL="$REG_URL" \
+    REGISTRY_USER="$REG_USER" \
+    REGISTRY_PASSWORD="$REG_PASSWORD"
+
+unset REG_PASSWORD
 
 echo "      All secrets stored in Vault successfully."
+
 
 # ------------------------------------------------------------------------------
 # 7. Save root token to a local env file (for the next script: k8s auth setup)
